@@ -19,6 +19,14 @@ imagecodecs 2022.2.22, napari 0.4.15), so:
 - **macOS arm64**: those pins have no arm64 wheels, so `override-dependencies`
   swaps in tensorflow-macos 2.8.0, scikit-image 0.19.x and a newer imagecodecs.
   PyQt5-Qt5 is >=5.15.11.
+- **macOS libomp**: lightgbm's macOS wheel links against `@rpath/libomp.dylib` and only
+  looks in Homebrew/MacPorts locations, so it fails to import without
+  `brew install libomp`. The local `macos-libomp/` package (installed on macOS only)
+  adds a `.pth` hook that preloads the `libomp.dylib` bundled with torch at interpreter
+  startup. Its install name matches the Homebrew path, so dyld reuses it for lightgbm.
+- On macOS, `uv run` prints `~ grpcio` on every run. grpcio's cp39 universal2 wheels
+  carry an x86_64-only tag in their metadata, so uv reinstalls the wheel each time. This
+  is harmless, because the binary contains arm64.
 - numpy is pinned to 1.23.5 and pydantic to v1, because TF 2.8, scikit-image 0.18
   and napari 0.4.15 all predate the newer releases.
 

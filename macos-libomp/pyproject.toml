@@ -1,0 +1,16 @@
+[project]
+name = "aydin-macos-libomp"
+version = "0.1.0"
+description = "Preload PyTorch's libomp so LightGBM's macOS wheel works without Homebrew's libomp"
+requires-python = ">=3.9"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.hatch.build.targets.wheel.force-include]
+"aydin_macos_libomp.pth" = "aydin_macos_libomp.pth"
+"_aydin_macos_libomp.py" = "_aydin_macos_libomp.py"
