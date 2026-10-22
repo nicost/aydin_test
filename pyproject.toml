@@ -1,0 +1,52 @@
+[project]
+name = "aydin-test"
+version = "0.1.0"
+description = "Run aydin on Windows x86_64 and macOS arm64"
+# aydin 0.1.15 pins scikit-image 0.18.3 / tensorflow 2.8.1, which only have wheels up to Python 3.9
+requires-python = "==3.9.*"
+dependencies = [
+    "aydin==0.1.15",
+    # TF 2.8 / scikit-image 0.18 predate numpy 2 (and numpy 1.24 removed aliases TF 2.8 uses)
+    "numpy==1.23.5",
+    # napari 0.4.15 (used by the aydin GUI) needs pydantic v1
+    "pydantic<2",
+    # aydin passes devices='NULL' to CatBoost for GPU training; catboost 1.2.9+ rejects that
+    # and aydin then silently falls back to CPU
+    "catboost<1.2.9",
+    # CUDA build on Windows (see [tool.uv.sources]); runs on CPU when no NVIDIA GPU is present
+    "torch==2.8.0",
+    # Qt runtime: 5.15.2 is the last with Windows wheels, 5.15.11+ are the first with macOS arm64 wheels
+    "pyqt5-qt5==5.15.2; sys_platform == 'win32'",
+    "pyqt5-qt5>=5.15.11; sys_platform == 'darwin'",
+    # Apple's TensorFlow build replaces tensorflow on macOS arm64
+    "tensorflow-macos==2.8.0; sys_platform == 'darwin'",
+]
+
+[tool.uv]
+# Only resolve for the two platforms we care about
+environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
+# aydin's exact pins have no macOS arm64 wheels; keep them on Windows, relax them on macOS
+override-dependencies = [
+    "tensorflow==2.8.1; sys_platform == 'win32'",
+    "scikit-image==0.18.3; sys_platform == 'win32'",
+    "scikit-image>=0.19.3,<0.20; sys_platform == 'darwin'",
+    "imagecodecs==2022.2.22; sys_platform == 'win32'",
+    "imagecodecs>=2022.9.26; sys_platform == 'darwin'",
+]
+constraint-dependencies = [
+    # last release with Windows wheels
+    "tensorflow-io-gcs-filesystem<=0.31.0; sys_platform == 'win32'",
+]
+
+# Windows: CUDA 12.6 PyTorch (needs NVIDIA driver >= 525; falls back to CPU without a GPU).
+# macOS: regular PyPI wheel, which uses CPU/MPS.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu126", marker = "sys_platform == 'win32'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
